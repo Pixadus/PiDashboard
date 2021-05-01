@@ -33,17 +33,12 @@ class Dashboard(QWidget):
 
         # Average value sample set size
         self.avg_val_sample_size = 2500
-
-        # Color options
-        ER_BTN_TXT = "rgb(0,0,0)"
-        ER_BTN_BCK = "rgb(100,100,100)"
-        ER_VAL_TXT = "#009D65"
         
         #########################
         # -- Window Geometry -- #
         #########################
 
-        self.title = 'PiDashboard'
+        self.title = 'Endurance'
         self.index = 0
         self.left = 10
         self.top = 10
@@ -80,7 +75,7 @@ class Dashboard(QWidget):
         vp_widget = QWidget()
         vp_layout = QVBoxLayout()
         vp_widget.setLayout(vp_layout)
-        vp_widget.setStyleSheet("background-color: #232323;")
+        vp_widget.setStyleSheet("background-color: #232323")
         dash_layout.addWidget(vp_widget,1,1)
 
         # VP Label
@@ -121,14 +116,14 @@ class Dashboard(QWidget):
         es_widget = QWidget()
         es_layout = QVBoxLayout()
         es_widget.setLayout(es_layout)
-        es_widget.setStyleSheet("background-color: #232323;")
+        es_widget.setStyleSheet("background-color: #232323")
         dash_layout.addWidget(es_widget,1,2)
 
         # ES Label
         es_label = QLabel("Engine Status")
         es_label.setFont(QFont('Fira Sans', 18))
         es_label.setAlignment(Qt.AlignCenter)
-        es_label.setStyleSheet("color: #FFFFFF; padding-left: 4em; padding-right: 4em;")
+        es_label.setStyleSheet("color: #FFFFFF")
         es_layout.addWidget(es_label)
 
         # MPG Row
@@ -222,12 +217,11 @@ class Dashboard(QWidget):
     def exitWindow(self):
         self.close()
     def powerOff(self):
-        os.system('systemctl poweroff')
+        os.system('sudo shutdown now')
 
 
 def main():
    app = QApplication(sys.argv)
-   app.setStyle('Fusion')
    dash = Dashboard()
    dash.showFullScreen()
    sys.exit(app.exec_())
