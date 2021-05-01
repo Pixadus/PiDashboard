@@ -419,8 +419,9 @@ class Dashboard(QWidget):
                 self.connection.watch(obd.commands.ELM_VOLTAGE)
                 self.connection.start()
             else:
-                # Wait 3 seconds, check if OBD connection is reestablished
-                time.sleep(3)
+                # Try reestablishing connection
+                self.connection = obd.Async()
+
 
 
 def main():
