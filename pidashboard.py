@@ -175,6 +175,16 @@ class Dashboard(QWidget):
         tmpr_layout.addWidget(tmp_value)
         es_layout.addWidget(tmpr_widget)
 
+        # VLT Row
+        vltr_widget = QWidget()
+        vltr_layout = QHBoxLayout()
+        vltr_widget.setLayout(vltr_layout)
+        vlt_button = QPushButton("VLT")
+        vlt_value = QLabel()
+        vltr_layout.addWidget(vlt_button)
+        vltr_layout.addWidget(vlt_value)
+        es_layout.addWidget(vltr_widget)
+
         # LOAD Row
         lodr_widget = QWidget()
         lodr_layout = QHBoxLayout()
@@ -370,34 +380,34 @@ class Dashboard(QWidget):
                 self.load_y_load.append(LOAD)
 
             # == Set Dash Values == #
-            self.dash_rpm_val.setText(str(round(RPM,2)))
-            self.dash_speed_val.setText(str(round(MPH_SPEED,2)))
-            self.dash_mpg_val.setText(str(round(MPG,2)))
-            self.dash_tmp_val.setText(str(round(CLT_TMP,2)))
-            self.dash_voltage_val.setText(str(round(VOLTAGE,2)))
-            self.dash_load_val.setText(str(round(LOAD,2)))
+            self.rpm_value.setText(str(round(RPM,2)))
+            self.spd_value.setText(str(round(MPH_SPEED,2)))
+            self.mpg_value.setText(str(round(MPG,2)))
+            self.tmp_value.setText(str(round(CLT_TMP,2)))
+            self.vlt_value.setText(str(round(VOLTAGE,2)))
+            self.lod_value.setText(str(round(LOAD,2)))
 
             # == Set Detailed Values == #
-            self.speed_lmi.setText(str(round(MPH_SPEED,2)))
-            self.speed_lma.setText(str(round(speed_mavg,2)))
-            self.rpm_lmi.setText(str(round(RPM,2)))
-            self.rpm_lma.setText(str(round(rpm_mavg,2)))
-            self.mpg_lmi.setText(str(round(MPG,2)))
-            self.mpg_lma.setText(str(round(mpg_mavg,2)))
-            self.tmp_lmi.setText(str(round(CLT_TMP,2)))
-            self.tmp_lma.setText(str(round(tmp_mavg,2)))
-            self.voltage_lmi.setText(str(round(VOLTAGE,2)))
-            self.voltage_lma.setText(str(round(voltage_mavg,2)))
-            self.load_lmi.setText(str(round(LOAD,2)))
-            self.load_lma.setText(str(round(load_mavg,2)))
+            # self.speed_lmi.setText(str(round(MPH_SPEED,2)))
+            # self.speed_lma.setText(str(round(speed_mavg,2)))
+            # self.rpm_lmi.setText(str(round(RPM,2)))
+            # self.rpm_lma.setText(str(round(rpm_mavg,2)))
+            # self.mpg_lmi.setText(str(round(MPG,2)))
+            # self.mpg_lma.setText(str(round(mpg_mavg,2)))
+            # self.tmp_lmi.setText(str(round(CLT_TMP,2)))
+            # self.tmp_lma.setText(str(round(tmp_mavg,2)))
+            # self.voltage_lmi.setText(str(round(VOLTAGE,2)))
+            # self.voltage_lma.setText(str(round(voltage_mavg,2)))
+            # self.load_lmi.setText(str(round(LOAD,2)))
+            # self.load_lma.setText(str(round(load_mavg,2)))
 
-            # == Update Graphs == #
-            self.speed_gp.setData(self.speed_x_time,self.speed_y_speed)
-            self.rpm_gp.setData(self.rpm_x_time, self.rpm_y_rpm)
-            self.mpg_gp.setData(self.mpg_x_time,self.mpg_y_mpg)
-            self.tmp_gp.setData(self.tmp_x_time,self.tmp_y_tmp)
-            self.voltage_gp.setData(self.tmp_x_time,self.voltage_y_voltage)
-            self.load_gp.setData(self.load_x_time,self.load_y_load)
+            # # == Update Graphs == #
+            # self.speed_gp.setData(self.speed_x_time,self.speed_y_speed)
+            # self.rpm_gp.setData(self.rpm_x_time, self.rpm_y_rpm)
+            # self.mpg_gp.setData(self.mpg_x_time,self.mpg_y_mpg)
+            # self.tmp_gp.setData(self.tmp_x_time,self.tmp_y_tmp)
+            # self.voltage_gp.setData(self.tmp_x_time,self.voltage_y_voltage)
+            # self.load_gp.setData(self.load_x_time,self.load_y_load)
         else:
             if self.connection.is_connected():
                 self.connection.watch(obd.commands.SPEED)
