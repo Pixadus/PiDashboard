@@ -21,7 +21,7 @@ class Dashboard(QWidget):
         csv_file = "obd_log.csv"
 
         # Refresh rate (in seconds) for OBD queries and graph updates
-        refresh_rate = 1
+        refresh_rate = 0.5
 
         # Graph x-axis range (in seconds)
         mpg_x_range = 60 
@@ -38,6 +38,9 @@ class Dashboard(QWidget):
         ER_BTN_TXT = "rgb(0,0,0)"
         ER_BTN_BCK = "rgb(100,100,100)"
         ER_VAL_TXT = "#009D65"
+
+        # OBD Connection
+        self.connection = obd.Async()
         
         #########################
         # -- Window Geometry -- #
@@ -61,6 +64,7 @@ class Dashboard(QWidget):
 
         # --- Timer --- #
         self.timer = QTimer()
+        self.timer.timeout.connect(self.UpdateValues)
         self.timer.start(int(refresh_rate*1000))
 
         ###################
@@ -223,6 +227,190 @@ class Dashboard(QWidget):
         self.close()
     def powerOff(self):
         os.system('systemctl poweroff')
+
+    def UpdateValues(self):
+        if self.connection.is_connected():
+            # TODO break this up into sub-functions in another file.
+            # == Update Current Values == #
+            SPEED = self.connection.query(obd.commands.SPEED).value.magnitude
+            RPM = self.connection.query(obd.commands.RPM).value.magnitude
+            MAP = self.connection.query(obd.commands.INTAKE_PRESSURE).value.magnitude
+            TMP = self.connection.query(obd.commands.INTAKE_TEMP).value.magnitude+273.15
+            CLT_TMP = self.connection.query(obd.commands.COOLANT_TEMP).value.magnitude
+            VOLTAGE = self.connection.query(obd.commands.ELM_VOLTAGE).value.magnitude
+            LOAD = self.connection.query(obd.commands.ENGINE_LOAD).value.magnitude
+
+            # == Speed Graph == #
+            # Calculate average value. Make sure data is less than the average value sample size.
+            MPH_SPEED = SPEED*0.62137
+            if len(self.speed_avg_list) < self.avg_val_sample_size:
+                self.speed_avg_list.append(MPH_SPEED)
+            else:
+                self.speed_avg_list.pop(0)
+                self.speed_avg_list.append(MPH_SPEED)
+            avg = 0
+            for x in range(len(self.speed_avg_list)):
+                avg += self.speed_avg_list[x]
+            speed_mavg = avg/len(self.speed_avg_list)
+
+            # Update the graph
+            if len(self.speed_x_time) <= self.speed_run_time:
+                self.speed_x_time.append(len(self.speed_x_time))
+                self.speed_y_speed.append(MPH_SPEED)
+            else:
+                self.speed_y_speed.pop(0)
+                self.speed_y_speed.append(MPH_SPEED)
+
+            # == RPM Graph == #
+            # Calculate average value. Make sure data is less than the average value sample size.
+            if len(self.rpm_avg_list) < self.avg_val_sample_size:
+                self.rpm_avg_list.append(RPM)
+            else:
+                self.rpm_avg_list.pop(0)
+                self.rpm_avg_list.append(RPM)
+            avg = 0
+            for x in range(len(self.rpm_avg_list)):
+                avg += self.rpm_avg_list[x]
+            rpm_mavg = avg/len(self.rpm_avg_list)
+
+            # Update the graph
+            if len(self.rpm_x_time) <= self.rpm_run_time:
+                self.rpm_x_time.append(len(self.rpm_x_time))
+                self.rpm_y_rpm.append(RPM)
+            else:
+                self.rpm_y_rpm.pop(0)
+                self.rpm_y_rpm.append(RPM)
+
+            # == MPG Calculations & Graph == #
+            R = 8.314  # Specific gas constant
+            MM = 28.97 # Molecular mass of air
+            DISP = 3.964 # Engine displacement in L
+            VE = 0.75 # Volumetric efficency, play around with this value
+            IMAP = (RPM*MAP)/TMP
+            MAF = (IMAP/120)*VE*DISP*(MM/R)
+            MPG = (710.7*SPEED)/(MAF*100)
+
+            # Update average value. Make sure data is less than the average value sample size - update over time. 
+            if len(self.mpg_avg_list) < self.avg_val_sample_size:
+                self.mpg_avg_list.append(MPG)
+            else:
+                self.mpg_avg_list.pop(0)
+                self.mpg_avg_list.append(MPG)
+            avg = 0
+            for x in range(len(self.mpg_avg_list)):
+                avg += self.mpg_avg_list[x]
+            mpg_mavg = avg/len(self.mpg_avg_list)
+
+            # Calculate graph changes
+            if len(self.mpg_x_time) <= self.mpg_run_time:
+                self.mpg_x_time.append(len(self.mpg_x_time))
+                self.mpg_y_mpg.append(MPG)
+            else:
+                self.mpg_y_mpg.pop(0)
+                self.mpg_y_mpg.append(MPG)
+
+            # == Temperature Graph == #
+            # Calculate average value. Make sure data is less than the average value sample size.
+            if len(self.tmp_avg_list) < self.avg_val_sample_size:
+                self.tmp_avg_list.append(CLT_TMP)
+            else:
+                self.tmp_avg_list.pop(0)
+                self.tmp_avg_list.append(CLT_TMP)
+            avg = 0
+            for x in range(len(self.tmp_avg_list)):
+                avg += self.tmp_avg_list[x]
+            tmp_mavg = avg/len(self.tmp_avg_list)
+
+            # Update the graph
+            if len(self.tmp_x_time) <= self.tmp_run_time:
+                self.tmp_x_time.append(len(self.tmp_x_time))
+                self.tmp_y_tmp.append(CLT_TMP)
+            else:
+                self.tmp_y_tmp.pop(0)
+                self.tmp_y_tmp.append(CLT_TMP)
+
+            # == Voltage Graph == #
+            # Calculate average value. Make sure data is less than the average value sample size.
+            if len(self.voltage_avg_list) < self.avg_val_sample_size:
+                self.voltage_avg_list.append(VOLTAGE)
+            else:
+                self.voltage_avg_list.pop(0)
+                self.voltage_avg_list.append(VOLTAGE)
+            avg = 0
+            for x in range(len(self.voltage_avg_list)):
+                avg += self.voltage_avg_list[x]
+            voltage_mavg = avg/len(self.voltage_avg_list)
+
+            # Update the graph
+            if len(self.voltage_x_time) <= self.voltage_run_time:
+                self.voltage_x_time.append(len(self.voltage_x_time))
+                self.voltage_y_voltage.append(VOLTAGE)
+            else:
+                self.voltage_y_voltage.pop(0)
+                self.voltage_y_voltage.append(VOLTAGE)
+
+            # == Load Graph == #
+            # Calculate average value. Make sure data is less than the average value sample size.
+            if len(self.load_avg_list) < self.avg_val_sample_size:
+                self.load_avg_list.append(LOAD)
+            else:
+                self.load_avg_list.pop(0)
+                self.load_avg_list.append(LOAD)
+            avg = 0
+            for x in range(len(self.load_avg_list)):
+                avg += self.load_avg_list[x]
+            load_mavg = avg/len(self.load_avg_list)
+
+            # Update the graph
+            if len(self.load_x_time) <= self.load_run_time:
+                self.load_x_time.append(len(self.load_x_time))
+                self.load_y_load.append(LOAD)
+            else:
+                self.load_y_load.pop(0)
+                self.load_y_load.append(LOAD)
+
+            # == Set Dash Values == #
+            self.dash_rpm_val.setText(str(round(RPM,2)))
+            self.dash_speed_val.setText(str(round(MPH_SPEED,2)))
+            self.dash_mpg_val.setText(str(round(MPG,2)))
+            self.dash_tmp_val.setText(str(round(CLT_TMP,2)))
+            self.dash_voltage_val.setText(str(round(VOLTAGE,2)))
+            self.dash_load_val.setText(str(round(LOAD,2)))
+
+            # == Set Detailed Values == #
+            self.speed_lmi.setText(str(round(MPH_SPEED,2)))
+            self.speed_lma.setText(str(round(speed_mavg,2)))
+            self.rpm_lmi.setText(str(round(RPM,2)))
+            self.rpm_lma.setText(str(round(rpm_mavg,2)))
+            self.mpg_lmi.setText(str(round(MPG,2)))
+            self.mpg_lma.setText(str(round(mpg_mavg,2)))
+            self.tmp_lmi.setText(str(round(CLT_TMP,2)))
+            self.tmp_lma.setText(str(round(tmp_mavg,2)))
+            self.voltage_lmi.setText(str(round(VOLTAGE,2)))
+            self.voltage_lma.setText(str(round(voltage_mavg,2)))
+            self.load_lmi.setText(str(round(LOAD,2)))
+            self.load_lma.setText(str(round(load_mavg,2)))
+
+            # == Update Graphs == #
+            self.speed_gp.setData(self.speed_x_time,self.speed_y_speed)
+            self.rpm_gp.setData(self.rpm_x_time, self.rpm_y_rpm)
+            self.mpg_gp.setData(self.mpg_x_time,self.mpg_y_mpg)
+            self.tmp_gp.setData(self.tmp_x_time,self.tmp_y_tmp)
+            self.voltage_gp.setData(self.tmp_x_time,self.voltage_y_voltage)
+            self.load_gp.setData(self.load_x_time,self.load_y_load)
+        else:
+            if self.connection.is_connected():
+                self.connection.watch(obd.commands.SPEED)
+                self.connection.watch(obd.commands.RPM)
+                self.connection.watch(obd.commands.INTAKE_PRESSURE)
+                self.connection.watch(obd.commands.INTAKE_TEMP)
+                self.connection.watch(obd.commands.COOLANT_TEMP)
+                self.connection.watch(obd.commands.ENGINE_LOAD)
+                self.connection.watch(obd.commands.ELM_VOLTAGE)
+                self.connection.start()
+            else:
+                # Wait 3 seconds, check if OBD connection is reestablished
+                time.sleep(3)
 
 
 def main():
