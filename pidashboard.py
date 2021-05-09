@@ -64,7 +64,7 @@ class Dashboard(QWidget):
 
         # --- Timer --- #
         self.timer = QTimer()
-        self.timer.timeout.connect(self.UpdateValues)
+        #self.timer.timeout.connect(self.UpdateValues)
         self.timer.start(int(refresh_rate*1000))
 
         ###################
