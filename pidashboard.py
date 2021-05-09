@@ -39,7 +39,13 @@ class Dashboard(QWidget):
         self.CAP_API     = cv2.CAP_ANY       # or cv2.CAP_DSHOW, etc...
         self.EXPOSURE    = 0                 # Non-zero for fixed exposure
         self.CAPTURING   = True              # System will start capturing as soon as engine starts
-        self.DISP_SCALE  = 5                      # Scaling factor for display image
+        self.DISP_SCALE  = 5                 # Scaling factor for display image
+
+        # Image save options
+        self.sec_per_shot = 5
+        self.path = datetime.now().strftime("%m-%d-%y-%H:%M:%S")
+        self.number = 0
+        os.mkdir(self.path)
 
         # OBD Connection
         self.connection = obd.Async()
@@ -283,7 +289,14 @@ class Dashboard(QWidget):
             image = imageq.get()
             if image is not None and len(image) > 0:
                 img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                self.save_image(img)
                 self.display_image(img, display, scale)
+
+    # Saves the image
+    def save_image(self, img):
+        if self.number % self.sec_per_shot*2 == 0:
+            cv2.imwrite(self.path+"/IMG-"+str(int(self.number/(self.sec_per_shot*2)))+'.png', img)
+        self.number+=1
 
     # Display an image, reduce size if required
     def display_image(self, img, display, scale=1):
