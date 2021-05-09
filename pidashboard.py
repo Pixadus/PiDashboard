@@ -43,9 +43,9 @@ class Dashboard(QWidget):
 
         # Image save options
         self.sec_per_shot = 5
-        self.path = os.path.join("/media/pi/EnduranceS",datetime.now().strftime("%m-%d-%y-%HH%Mm%Ss"))
+        #self.path = os.path.join("/media/pi/EnduranceS",datetime.now().strftime("%m-%d-%y-%HH%Mm%Ss"))
         self.number = 0
-        os.mkdir(self.path)
+        #os.mkdir(self.path)
 
         # OBD Connection
         self.connection = obd.Async()
@@ -88,6 +88,15 @@ class Dashboard(QWidget):
         dash_widget.setLayout(dash_layout)
         self.layout.addWidget(dash_widget)
 
+        ################
+        # -- Spacer -- #
+        ################
+        s_widget = QWidget()
+        s_layout = QVBoxLayout()
+        s_layout.addStretch(40)
+        s_widget.setLayout(s_layout)
+        dash_layout.addWidget(s_widget,1,1)
+
         ##############################
         # -- Video Preview Widget -- #
         ##############################
@@ -96,7 +105,7 @@ class Dashboard(QWidget):
         vp_layout = QVBoxLayout()
         vp_widget.setLayout(vp_layout)
         vp_widget.setStyleSheet("background-color: #232323;")
-        dash_layout.addWidget(vp_widget,1,1)
+        dash_layout.addWidget(vp_widget,2,1)
 
         # VP Label
         vp_top_label = QLabel("Video Status")
@@ -135,7 +144,7 @@ class Dashboard(QWidget):
         es_layout = QVBoxLayout()
         es_widget.setLayout(es_layout)
         es_widget.setStyleSheet("background-color: #232323;")
-        dash_layout.addWidget(es_widget,1,2)
+        dash_layout.addWidget(es_widget,2,2)
 
         # ES Label
         es_label = QLabel("Engine Status")
@@ -212,7 +221,7 @@ class Dashboard(QWidget):
         bot_layout = QHBoxLayout()
         bot_widget.setLayout(bot_layout)
         bot_widget.setStyleSheet("background-color: #232323")
-        dash_layout.addWidget(bot_widget,2,1,1,2)
+        dash_layout.addWidget(bot_widget,3,1,1,2)
 
         # Left spacing
         bot_layout.addSpacerItem(QSpacerItem(80,10))
