@@ -43,7 +43,7 @@ class Dashboard(QWidget):
 
         # Image save options
         self.sec_per_shot = 5
-        self.path = datetime.now().strftime("%m-%d-%y-%H:%M:%S")
+        self.path = os.path.join("/media/pi/EnduranceS",datetime.now().strftime("%m-%d-%y-%HH%Mm%Ss"))
         self.number = 0
         os.mkdir(self.path)
 
