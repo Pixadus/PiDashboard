@@ -1,12 +1,10 @@
 from ctypes import alignment
-import sys
-import obd
-import os
-import time
+import sys, obd, os, cv2, time, threading
 from datetime import datetime
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
+import queue as Queue
 #import pyqtgraph as pg
 
 class Dashboard(QWidget):
@@ -22,7 +20,7 @@ class Dashboard(QWidget):
         csv_file = "obd_log.csv"
 
         # Refresh rate (in seconds) for OBD queries and graph updates
-        refresh_rate = 0.5
+        self.refresh_rate = 0.5
 
         # Graph x-axis range (in seconds)
         mpg_x_range = 60 
@@ -35,10 +33,13 @@ class Dashboard(QWidget):
         # Average value sample set size
         self.avg_val_sample_size = 2500
 
-        # Color options
-        ER_BTN_TXT = "rgb(0,0,0)"
-        ER_BTN_BCK = "rgb(100,100,100)"
-        ER_VAL_TXT = "#009D65"
+        self.queue = Queue.Queue()
+        # Image capture options
+        self.IMG_SIZE    = 1920,1080         # 640,480 or 1280,720 or 1920,1080
+        self.CAP_API     = cv2.CAP_ANY       # or cv2.CAP_DSHOW, etc...
+        self.EXPOSURE    = 0                 # Non-zero for fixed exposure
+        self.CAPTURING   = True              # System will start capturing as soon as engine starts
+        self.DISP_SCALE  = 2                      # Scaling factor for display image
 
         # OBD Connection
         self.connection = obd.Async()
@@ -66,7 +67,10 @@ class Dashboard(QWidget):
         # --- Timer --- #
         self.timer = QTimer()
         #self.timer.timeout.connect(self.UpdateValues)
-        self.timer.start(int(refresh_rate*1000))
+        self.timer.timeout.connect(lambda: self.show_image(self.queue, self.vp_image, self.DISP_SCALE))        
+        self.timer.start(int(self.refresh_rate*1000))
+        self.capture_thread = threading.Thread(target=self.grab_images, args=(0, self.queue, self.CAPTURING))
+        self.capture_thread.start()         # Thread to grab images
 
         ###################
         # -- Dashboard -- #
@@ -96,21 +100,19 @@ class Dashboard(QWidget):
         vp_layout.addWidget(vp_top_label)
 
         # Placeholder image
-        vp_placeholder = QLabel()
-        vp_placeholder.setPixmap(QPixmap('media/blank.png'))
-        vp_placeholder.setAlignment(Qt.AlignCenter)
-        vp_layout.addWidget(vp_placeholder)
+        self.vp_image = ImageWidget()
+        vp_layout.addWidget(self.vp_image, alignment=Qt.AlignCenter)
 
         # Button row widget
         vp_br_widget = QWidget()
         vp_br_layout = QHBoxLayout()
         vp_br_widget.setLayout(vp_br_layout)
-        vp_br_play = QPushButton("Play")
+        vp_br_play = QPushButton("Start")
+        vp_br_play.clicked.connect(self.startCapture)
         vp_br_stop = QPushButton("Stop")
-        vp_br_exp = QPushButton("Expand")
+        vp_br_stop.clicked.connect(self.stopCapture)
         vp_br_layout.addWidget(vp_br_play)
         vp_br_layout.addWidget(vp_br_stop)
-        vp_br_layout.addWidget(vp_br_exp)
         vp_layout.addWidget(vp_br_widget)
 
         # Storage indicator bar (can we do a text indicator, like 1.24/2.00?)
@@ -237,9 +239,61 @@ class Dashboard(QWidget):
 
     # ------ EVENTS ------- #
     def exitWindow(self):
+        self.CAPTURING=False
         self.close()
     def powerOff(self):
+        self.capture_thread._stop()
         os.system('systemctl poweroff')
+    def startCapture(self):
+        self.CAPTURING=True
+        self.capture_thread = threading.Thread(target=self.grab_images, args=(0, self.queue, self.CAPTURING))
+        self.capture_thread.start()         # Thread to grab images
+    def stopCapture(self):
+        self.CAPTURING=False
+
+    # Grab images from the camera (separate thread)
+    def grab_images(self, cam_num, queue, capturing):
+        cap = cv2.VideoCapture(cam_num-1 + self.CAP_API)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.IMG_SIZE[0])
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.IMG_SIZE[1])
+        if self.EXPOSURE:
+            cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
+            cap.set(cv2.CAP_PROP_EXPOSURE, self.EXPOSURE)
+        else:
+            cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
+        while True:
+            if self.CAPTURING:
+                if cap.grab():
+                    retval, image = cap.retrieve(0)
+                    if image is not None and queue.qsize() < 2:
+                        queue.put(image)
+                    else:
+                        time.sleep(self.refresh_rate / 1000.0)
+                else:
+                    print("Error: can't grab camera image")
+                    break
+            else:
+                break
+        cap.release()       
+
+
+    # Fetch camera image from queue, and display it
+    def show_image(self, imageq, display, scale):
+        if not imageq.empty():
+            image = imageq.get()
+            if image is not None and len(image) > 0:
+                img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                self.display_image(img, display, scale)
+
+    # Display an image, reduce size if required
+    def display_image(self, img, display, scale=1):
+        disp_size = img.shape[1]//scale, img.shape[0]//scale
+        disp_bpl = disp_size[0] * 3
+        if scale > 1:
+            img = cv2.resize(img, disp_size, 
+                             interpolation=cv2.INTER_CUBIC)
+        qimg = QImage(img.data, disp_size[0], disp_size[1], disp_bpl, QImage.Format_BGR888)
+        display.setImage(qimg)
         
     def UpdateValues(self):
         now = datetime.now()
@@ -426,6 +480,26 @@ class Dashboard(QWidget):
             else:
                 # Try reestablishing connection
                 self.connection = obd.Async()
+    
+#############################
+# -- Image Custom Widget -- #
+#############################
+class ImageWidget(QWidget):
+    def __init__(self, parent=None):
+        super(ImageWidget, self).__init__(parent)
+        self.image = None
+
+    def setImage(self, image):
+        self.image = image
+        self.setMinimumSize(image.size())
+        self.update()
+
+    def paintEvent(self, event):
+        qp = QPainter()
+        qp.begin(self)
+        if self.image:
+            qp.drawImage(QPoint(0, 0), self.image)
+        qp.end()
 
 
 
