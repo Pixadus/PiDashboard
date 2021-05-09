@@ -39,13 +39,13 @@ class Dashboard(QWidget):
         self.CAP_API     = cv2.CAP_ANY       # or cv2.CAP_DSHOW, etc...
         self.EXPOSURE    = 0                 # Non-zero for fixed exposure
         self.CAPTURING   = False             # System needs to be manually activated
-        self.DISP_SCALE  = 5                 # Scaling factor for display image
+        self.DISP_SCALE  = 6                 # Scaling factor for display image
 
         # Image save options
         self.sec_per_shot = 5
-        #self.path = os.path.join("/media/pi/EnduranceS",datetime.now().strftime("%m-%d-%y-%HH%Mm%Ss"))
+        self.path = os.path.join("/media/pi/EnduranceS",datetime.now().strftime("%m-%d-%y-%Hh%Mm%Ss"))
         self.number = 0
-        #os.mkdir(self.path)
+        os.mkdir(self.path)
 
         # OBD Connection
         self.connection = obd.Async()
