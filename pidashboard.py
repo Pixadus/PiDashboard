@@ -38,7 +38,7 @@ class Dashboard(QWidget):
         self.IMG_SIZE    = 1920,1080         # 640,480 or 1280,720 or 1920,1080
         self.CAP_API     = cv2.CAP_ANY       # or cv2.CAP_DSHOW, etc...
         self.EXPOSURE    = 0                 # Non-zero for fixed exposure
-        self.CAPTURING   = True              # System will start capturing as soon as engine starts
+        self.CAPTURING   = False             # System needs to be manually activated
         self.DISP_SCALE  = 5                 # Scaling factor for display image
 
         # Image save options
