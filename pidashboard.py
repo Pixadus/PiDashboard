@@ -1,9 +1,9 @@
 from ctypes import alignment
 import sys, obd, os, cv2, time, threading
 from datetime import datetime
+from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
 import queue as Queue
 #import pyqtgraph as pg
 
@@ -39,7 +39,7 @@ class Dashboard(QWidget):
         self.CAP_API     = cv2.CAP_ANY       # or cv2.CAP_DSHOW, etc...
         self.EXPOSURE    = 0                 # Non-zero for fixed exposure
         self.CAPTURING   = True              # System will start capturing as soon as engine starts
-        self.DISP_SCALE  = 2                      # Scaling factor for display image
+        self.DISP_SCALE  = 5                      # Scaling factor for display image
 
         # OBD Connection
         self.connection = obd.Async()
@@ -292,7 +292,7 @@ class Dashboard(QWidget):
         if scale > 1:
             img = cv2.resize(img, disp_size, 
                              interpolation=cv2.INTER_CUBIC)
-        qimg = QImage(img.data, disp_size[0], disp_size[1], disp_bpl, QImage.Format_BGR888)
+        qimg = QImage(img.data, disp_size[0], disp_size[1], disp_bpl, QImage.Format_RGB888)
         display.setImage(qimg)
         
     def UpdateValues(self):
