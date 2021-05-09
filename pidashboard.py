@@ -3,6 +3,7 @@ import sys
 import obd
 import os
 import time
+from datetime import datetime
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -209,11 +210,13 @@ class Dashboard(QWidget):
         bot_layout.addSpacerItem(QSpacerItem(80,10))
 
         # Date / time label
-        bot_date = QLabel("Test")
-        bot_date.setFont(QFont('Fira Sans Light', 16))
-        bot_date.setAlignment(Qt.AlignVCenter)
-        bot_date.setStyleSheet("color: #009D65")
-        bot_layout.addWidget(bot_date)
+        self.bot_date = QLabel("Test")
+        self.bot_date.setFont(QFont('Fira Sans Light', 16))
+        self.bot_date.setAlignment(Qt.AlignVCenter)
+        self.bot_date.setStyleSheet("color: #009D65")
+        now = datetime.now()
+        self.bot_date.setText(now.strftime("%H:%M:%S - %B %d, %Y"))
+        bot_layout.addWidget(self.bot_date)
 
         # Center spacing
         bot_layout.addSpacerItem(QSpacerItem(200,10))
@@ -237,8 +240,10 @@ class Dashboard(QWidget):
         self.close()
     def powerOff(self):
         os.system('systemctl poweroff')
-
+        
     def UpdateValues(self):
+        now = datetime.now()
+        self.bot_date.setText(now.strftime("%H:%M:%S - %B %d, %Y"))
         if self.connection.is_connected():
             # TODO break this up into sub-functions in another file.
             # == Update Current Values == #
